@@ -1,8 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-app.use(cors());
+
 const app = express();
-const port = 3000;
 
 // Middleware
 app.use(cors());
@@ -41,3 +40,6 @@ app.post('/status', (req, res) => {
 app.listen(port, () => {
     console.log(`Serwer działa na http://localhost:${port}`);
 });
+
+// Eksport dla aplikacji Vefcel
+module.exports = app;
