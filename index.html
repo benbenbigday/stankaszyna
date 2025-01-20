@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stan Kaszyna</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #statusDisplay {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stan Kaszyna</h1>
+    <div id="statusDisplay">
+        <p><strong>Data:</strong> <span id="date"></span></p>
+        <p><strong>Stan:</strong> <span id="status"></span></p>
+        <p><strong>Ostatnia aktualizacja:</strong> <span id="lastUpdated"></span></p>
+    </div>
+    <form id="statusForm">
+        <label for="newStatus">Podaj nowy status:</label>
+        <input type="text" id="newStatus" name="newStatus" maxlength="20" required>
+        <button type="submit">Aktualizuj</button>
+    </form>
+
+    <script>
+        const apiUrl = 'http://localhost:3000/status';
+
+        // Fetch current status and display it
+        async function fetchStatus() {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            document.getElementById('date').innerText = data.date;
+            document.getElementById('status').innerText = data.status;
+            document.getElementById('lastUpdated').innerText = data.lastUpdated;
+        }
+
+        // Update status when form is submitted
+        document.getElementById('statusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newStatus = document.getElementById('newStatus').value;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (response.ok) {
+                alert('Status zaktualizowany!');
+                fetchStatus(); // Refresh the status display
+            } else {
+                const error = await response.json();
+                alert(error.message);
+            }
+
+            document.getElementById('newStatus').value = '';
+        });
+
+        // Initial fetch
+        fetchStatus();
+    </script>
+</body>
+</html>
