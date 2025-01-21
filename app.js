@@ -1,45 +1,58 @@
-const express = require('express');
-const cors = require('cors');
+const apiUrl = "https://stankaszyna.vercel.app/status";
 
-const app = express();
+// Funkcja pobierająca dane z serwera
+async function fetchStatus() {
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+    // Aktualizacja elementów w DOM
+    document.getElementById("date").textContent = data.date || "Brak danych";
+    document.getElementById("status").textContent = data.status || "Brak danych";
+    document.getElementById("lastUpdated").textContent = data.lastUpdated || "Brak danych";
+  } catch (error) {
+    console.error("Wystąpił problem z pobieraniem statusu:", error);
+    alert("Nie udało się pobrać danych. Sprawdź połączenie z serwerem.");
+  }
+}
 
-// Store status in memory
-let currentStatus = {
-    date: new Date().toISOString().split('T')[0], // Current date
-    status: 'brak danych',
-    lastUpdated: new Date().toLocaleTimeString('pl-PL')
-};
+// Funkcja obsługująca przesyłanie nowego stanu
+async function updateStatus(event) {
+  event.preventDefault();
 
-// API endpoint to get the current status
-app.get('/status', (req, res) => {
-    res.json(currentStatus);
-});
+  const newStatus = document.getElementById("newStatus").value;
+  if (!newStatus) {
+    alert("Proszę wpisać nowy stan.");
+    return;
+  }
 
-// API endpoint to update the status
-app.post('/status', (req, res) => {
-    const { status } = req.body;
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
 
-    if (!status || typeof status !== 'string' || status.length > 20) {
-        return res.status(400).json({ message: 'Podaj poprawny status (1-20 znaków).' });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    currentStatus = {
-        date: new Date().toISOString().split('T')[0],
-        status,
-        lastUpdated: new Date().toLocaleTimeString('pl-PL')
-    };
+    alert("Stan został pomyślnie zaktualizowany!");
+    document.getElementById("newStatus").value = ""; // Wyczyść pole formularza
+    fetchStatus(); // Odśwież dane na stronie
+  } catch (error) {
+    console.error("Wystąpił problem z aktualizacją statusu:", error);
+    alert("Nie udało się zaktualizować stanu. Spróbuj ponownie później.");
+  }
+}
 
-    res.json({ message: 'Status zaktualizowany!', currentStatus });
-});
+// Dodanie obsługi zdarzeń
+document.getElementById("statusForm").addEventListener("submit", updateStatus);
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Serwer działa na http://localhost:${port}`);
-});
-
-// Eksport dla aplikacji Vefcel
-module.exports = app;
+// Pobranie danych przy ładowaniu strony
+fetchStatus();
